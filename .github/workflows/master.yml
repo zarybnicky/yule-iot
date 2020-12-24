@@ -31,17 +31,10 @@ jobs:
         echo "${{ secrets.PRIVATE_KEY }}" > ~/.ssh/deploy_key
         chmod 700 ~/.ssh
         chmod 600 ~/.ssh/deploy_key
-        cat > ~/.ssh/config <<EOS
-          Host deploy
-          Hostname ${{ secrets.HOST }}
-          User iot
-          IdentityFile ~/.ssh/deploy_key
-          StrictHostKeyChecking no
-        EOS
         set -xe
 
-        NIX_SSHOPTS="-o StrictHostKeyChecking=no" nix copy --no-check-sigs -s --to ssh://${{ secrets.HOST }} ./result
-        ssh ${{ secrets.HOST }} 2>&1 <<EOS
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no iot@${{ secrets.HOST }} 2>&1 <<EOS
+          nix-copy-closure -v --gzip --from https://zarybnicky-cache.cachix.org $(realpath ./result)
           sudo $(realpath ./result)/bin/switch-to-configuration switch
           sudo nix-env --profile /nix/var/nix/profiles/system --set $(realpath ./result)
         EOS
