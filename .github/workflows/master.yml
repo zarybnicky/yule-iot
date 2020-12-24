@@ -28,9 +28,9 @@ jobs:
 
         set +xe
         mkdir -p ~/.ssh
-        echo "${{ secrets.PRIVATE_KEY }}" > "$SSHPATH/deploy_key"
-        chmod 700 "$SSHPATH"
-        chmod 600 "$SSHPATH/deploy_key"
+        echo "${{ secrets.PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 700 ~/.ssh
+        chmod 600 ~/.ssh/deploy_key
         set -xe
 
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no iot@${{ secrets.HOST }} <<EOS
