@@ -16,8 +16,7 @@ jobs:
         extra_nix_config: |
           experimental-features = nix-command flakes
     - run: "nix-env --quiet -j8 -iA cachix -f https://cachix.org/api/v1/install"
-    - run: "cachix authtoken $CACHIX_AUTH_TOKEN"
-      env: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - run: "cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}"
     - run: "cachix use zarybnicky-cache"
     - run: "nix path-info --all | grep -v '\\.drv$' > /tmp/store-path-pre-build"
     - run: "nix build .#test"
