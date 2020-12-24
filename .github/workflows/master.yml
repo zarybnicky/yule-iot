@@ -25,7 +25,7 @@ jobs:
         nix build -L .#nixosConfigurations.charlie.config.system.build.toplevel
         echo ./result | cachix push -j8 zarybnicky-cache
         export RESULT=$(realpath result)
-        echo "::set-env name=RESULT::$RESULT
+        echo "::set-env name=RESULT::$RESULT"
     - name: Deploy from cache
       uses: fifsky/ssh-action@master
       with:
