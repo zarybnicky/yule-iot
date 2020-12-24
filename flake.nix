@@ -73,7 +73,7 @@
 
           environment.systemPackages = with pkgs; [
             coreutils diffutils findutils binutils file htop silver-searcher ripgrep
-            git cachix rabbitmq-server
+            git cachix rabbitmq-server mosquitto
           ];
 
           services.fail2ban.enable = true;
@@ -106,13 +106,19 @@
             virtualHosts."iot.zarybnicky.com" = {
               enableACME = true;
               forceSSL = true;
-              root = getSrc ./web;
+              locations."/" = {
+                root = getSrc ./web;
+                index = "index.html";
+                extraConfig = ''
+                  rewrite ^/(css/.*)$ /rabbitmq/$1 last;
+                  rewrite ^/(js/.*)$ /rabbitmq/$1 last;
+                  rewrite ^/(api/.*)$ /rabbitmq/$1 last;
+                  rewrite ^/img/rabbitmqlogo.svg$ /rabbitmq/img/rabbitmqlogo.svg last;
+                  rewrite ^/favicon.ico$ /rabbitmq/favicon.ico last;
+                '';
+              };
               locations."/grafana" = {
                 proxyPass = "http://127.0.0.1:3000";
-                proxyWebsockets = true;
-              };
-              locations."/loki" = {
-                proxyPass = "http://127.0.0.1:3100";
                 proxyWebsockets = true;
               };
               locations."/prometheus" = {
@@ -138,6 +144,10 @@
           };
           services.kibana = {
             enable = true;
+            extraConf = {
+              "server.basePath" = "/kibana";
+              "server.rewriteBasePath" = true;
+            };
           };
           services.logstash = {
             enable = true;
@@ -148,14 +158,16 @@
 
           services.grafana = {
             enable = true;
+            domain = "iot.zarybnicky.com";
             rootUrl = "https://iot.zarybnicky.com/grafana/";
             auth.anonymous.enable = true;
             auth.anonymous.org_role = "Editor";
           };
+          systemd.services.grafana.environment.GF_SERVER_SERVE_FROM_SUB_PATH = "true";
 
           services.prometheus = {
             enable = true;
-            webExternalUrl = "https://iot.zarybnicky.com/prometheus/";
+            webExternalUrl = "https://iot.zarybnicky.com/prometheus";
             globalConfig.scrape_interval = "15s";
             rules = [];
             scrapeConfigs = [
@@ -196,8 +208,7 @@
             listenAddress = "0.0.0.0";
             plugins = [ "rabbitmq_management" "rabbitmq_prometheus" ];
             configItems = {
-              # "auth_backends.1.authn" = "rabbit_auth_backend_ldap";
-              # "auth_backends.1.authz" = "rabbit_auth_backend_internal";
+              "management.path_prefix" = "/rabbitmq";
             };
           };
 

@@ -23,7 +23,7 @@ jobs:
     - name: Run nixos-upgrade over SSH
       uses: fifsky/ssh-action@master
       with:
-        command: "nixos-rebuild switch --flake github:zarybnicky/yule-iot/$GITHUB_SHA"
+        command: "nixos-rebuild switch -j1 --flake github:zarybnicky/yule-iot/$GITHUB_SHA"
         user: iot
         host: ${{ secrets.HOST }}
         key: ${{ secrets.PRIVATE_KEY }}
