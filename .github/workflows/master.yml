@@ -23,7 +23,7 @@ jobs:
     - name: Run nixos-upgrade over SSH
       uses: fifsky/ssh-action@master
       with:
-        command: systemctl start nixos-upgrade.service
+        command: sudo systemctl start --no-block nixos-upgrade.service
         user: iot
         host: ${{ secrets.HOST }}
         key: ${{ secrets.PRIVATE_KEY }}
