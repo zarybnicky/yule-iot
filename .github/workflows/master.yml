@@ -15,15 +15,20 @@ jobs:
         install_url: https://github.com/numtide/nix-flakes-installer/releases/download/nix-2.4pre20201221_9fab14a/install
         extra_nix_config: |
           experimental-features = nix-command flakes
-    - run: nix-env --quiet -j8 -iA cachix -f https://cachix.org/api/v1/install
-    - run: "cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: cachix use zarybnicky-cache
-    - run: "nix build -L .#nixosConfigurations.charlie.config.system.build.toplevel"
-    - run: echo ./result | cachix push -j8 zarybnicky-cache
-    - name: Run nixos-upgrade over SSH
-      uses: fifsky/ssh-action@master
-      with:
-        command: "nixos-rebuild switch -j1 --flake github:zarybnicky/yule-iot/$GITHUB_SHA"
-        user: iot
-        host: ${{ secrets.HOST }}
-        key: ${{ secrets.PRIVATE_KEY }}
+    - name: Setup
+      run: |
+        nix-env --quiet -j8 -iA cachix -f https://cachix.org/api/v1/install
+        cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
+        cachix use zarybnicky-cache
+    - name: Build & push
+      run: |
+        nix build -L .#nixosConfigurations.charlie.config.system.build.toplevel
+        echo ./result | cachix push -j8 zarybnicky-cache
+    - name: Deploy
+      run: |
+        echo "$SSH_PRIVATE_KEY" > ../private.key
+        chmod 600 ../private.key
+        mkdir -p ~/.ssh/
+        ssh-keyscan -H ${{ secrets.HOST }} > ~/.ssh/known_hosts
+        export SSHOPTS="-i ../private.key"
+        result/sw/bin/nixos-rebuild --target-host ${{ secrets.HOST }} --build-host localhost --flake .#charlie switch
