@@ -15,9 +15,15 @@ jobs:
         install_url: https://github.com/numtide/nix-flakes-installer/releases/download/nix-2.4pre20201221_9fab14a/install
         extra_nix_config: |
           experimental-features = nix-command flakes
-    - run: "nix-env --quiet -j8 -iA cachix -f https://cachix.org/api/v1/install"
+    - run: nix-env --quiet -j8 -iA cachix -f https://cachix.org/api/v1/install
     - run: "cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: "cachix use zarybnicky-cache"
-    - run: "nix path-info --all | grep -v '\\.drv$' > /tmp/store-path-pre-build"
-    - run: "nix build -L .#test 2>&1 && ls"
-    - run: "echo ./result | cachix push -j8 zarybnicky-cache"
+    - run: cachix use zarybnicky-cache
+    - run: "nix build -L .#nixosConfigurations.charlie.config.system.build.toplevel"
+    - run: echo ./result | cachix push -j8 zarybnicky-cache
+    - name: Run nixos-upgrade over SSH
+      uses: fifsky/ssh-action@master
+      with:
+        command: systemctl start nixos-upgrade.service
+        user: iot
+        host: ${{ secrets.HOST }}
+        key: ${{ secrets.PRIVATE_KEY }}
