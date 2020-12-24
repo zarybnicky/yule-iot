@@ -40,7 +40,7 @@ jobs:
         EOS
         set -xe
 
-        nix copy -s --to ssh://${{ secrets.HOST }} ./result
+        NIX_SSHOPTS="-o StrictHostKeyChecking=no" nix copy --no-check-sigs -s --to ssh://${{ secrets.HOST }} ./result
         ssh ${{ secrets.HOST }} 2>&1 <<EOS
           sudo $(realpath ./result)/bin/switch-to-configuration switch
           sudo nix-env --profile /nix/var/nix/profiles/system --set $(realpath ./result)
