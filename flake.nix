@@ -52,6 +52,11 @@
           ];
           nix.trustedUsers = [ "root" "iot" ];
 
+          time.timeZone = "Europe/Prague";
+          i18n.defaultLocale = "en_US.UTF-8";
+          console.font = "Lat2-Terminus16";
+          console.keyMap = "cz";
+
           boot.cleanTmpDir = true;
           boot.loader.grub.device = "/dev/sda";
           fileSystems."/" = { device = "/dev/sda1"; fsType = "ext4"; };
@@ -66,10 +71,12 @@
             flake = github:zarybnicky/yule-iot/master;
           };
 
-          environment.systemPackages = [
-            pkgs.git pkgs.cachix
+          environment.systemPackages = with pkgs; [
+            coreutils diffutils findutils binutils file htop silver-searcher ripgrep
+            git cachix rabbitmq-server
           ];
 
+          services.fail2ban.enable = true;
           security.sudo.wheelNeedsPassword = false;
           services.openssh.enable = true;
           services.openssh.permitRootLogin = "yes";
@@ -120,10 +127,6 @@
                 proxyPass = "http://127.0.0.1:5601";
                 proxyWebsockets = true;
               };
-              # locations."/alertmanager" = {
-              #   proxyPass = "http://127.0.0.1:9093";
-              #   proxyWebsockets = true;
-              # };
             };
           };
           security.acme.acceptTerms = true;
@@ -131,13 +134,15 @@
 
           services.elasticsearch = {
             enable = true;
+            extraJavaOptions = [ "-Xms128m" ];
           };
           services.kibana = {
             enable = true;
           };
           services.logstash = {
             enable = true;
-            inputConfig = "rabbitmq { host => 'localhost' exchange => \"iot\" durable => true }";
+            dataDir = "/var/lib/logstash --java-execution false";
+            inputConfig = "rabbitmq { host => \"127.0.0.1\" durable => true }";
             outputConfig = "elasticsearch { }";
           };
 
@@ -185,21 +190,10 @@
               "textfile"
             ];
           };
-          # services.prometheus.alertManagers = [{
-          #   scheme = "http";
-          #   path_prefix = "/alertmanager";
-          #   static_configs = [{ targets = [ "localhost" ]; }];
-          # }];
-          # services.prometheus.alertmanager = {
-          #   enable = true;
-          #   webExternalUrl = "https://iot.zarybnicky.com/alertmanager/";
-          #   configuration = {
-          #   };
-          # };
 
           services.rabbitmq = {
             enable = true;
-            listenAddress = "";
+            listenAddress = "0.0.0.0";
             plugins = [ "rabbitmq_management" "rabbitmq_prometheus" ];
             configItems = {
               # "auth_backends.1.authn" = "rabbit_auth_backend_ldap";
@@ -223,7 +217,7 @@
                   final_sleep: 0s
                 chunk_idle_period: 1h
                 max_chunk_age: 1h
-                chunk_target_size: 1048576k
+                chunk_target_size: 1048576000
                 chunk_retain_period: 30s
                 max_transfer_retries: 0
               schema_config:
