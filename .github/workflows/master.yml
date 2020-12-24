@@ -20,15 +20,19 @@ jobs:
         nix-env --quiet -j8 -iA cachix -f https://cachix.org/api/v1/install
         cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
         cachix use zarybnicky-cache
-    - name: Build & push
+    - name: Build & push to cache
       run: |
         nix build -L .#nixosConfigurations.charlie.config.system.build.toplevel
         echo ./result | cachix push -j8 zarybnicky-cache
-    - name: Deploy
-      run: |
-        echo "$PRIVATE_KEY" > ../private.key
-        chmod 600 ../private.key
-        mkdir -p ~/.ssh/
-        ssh-keyscan -H ${{ secrets.HOST }} > ~/.ssh/known_hosts
-        export SSHOPTS="-i ../private.key"
-        result/sw/bin/nixos-rebuild --target-host ${{ secrets.HOST }} --build-host localhost --flake .#charlie switch
+        export RESULT=$(realpath result)
+        echo "::set-env name=RESULT::$RESULT
+    - name: Deploy from cache
+      uses: fifsky/ssh-action@master
+      with:
+        command: |
+          nix-copy-closure --gzip --from https://zarybnicky-cache.cachix.org $RESULT
+          sudo $RESULT/bin/switch-to-configuration switch
+          sudo nix-env --profile /nix/var/nix/profiles/system --set $RESULT
+        user: iot
+        host: ${{ secrets.HOST }}
+        key: ${{ secrets.PRIVATE_KEY}}
