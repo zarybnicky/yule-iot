@@ -1,0 +1,40 @@
+<style>
+ .grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+     grid-gap: 1rem;
+ }
+ .grid > a {
+     background: black;
+     padding: 1rem;
+     display: grid;
+     place-items: center;
+ }
+ .grid > div::before {
+     content: "";
+     display: block;
+     padding-bottom: 100%;
+     grid-area: 1 / 1 / 2 / 2;
+ }
+ .grid > a img {
+     width: 100%;
+     grid-area: 1 / 1 / 2 / 2;
+ }
+ body {
+     margin: 2rem;
+ }
+</style>
+<div class="grid">
+  <a href="/rabbitmq">
+    <img src="https://herve.beraud.io/images/blog/rabbitmq.png" alt="RabbitMQ" name="RabbitMQ">
+  </a>
+  <a href="/prometheus">
+    <img src="https://symbols-electrical.getvecta.com/stencil_92/47_prometheus.18f6d5e7c5.svg" alt="Prometheus" name="Prometheus">
+  </a>
+  <a href="/grafana">
+    <img src="https://upload.wikimedia.org/wikipedia/en/thumb/a/a1/Grafana_logo.svg/1024px-Grafana_logo.svg.png" alt="Grafana" name="Grafana">
+  </a>
+  <a href="/loki">
+    <img src="https://grafana.com/docs/loki/latest/logo_and_name.png" alt="Loki" name="Loki">
+  </a>
+</div>

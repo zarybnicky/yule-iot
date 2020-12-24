@@ -31,6 +31,7 @@
       system = "x86_64-linux";
       modules = [
         { nixpkgs.overlays = [ self.overlay ]; }
+        { nixpkgs.config.allowUnfree = true; }
         (nixpkgs + "/nixos/modules/profiles/qemu-guest.nix")
 
         ({ pkgs, ... }: {
@@ -94,6 +95,7 @@
             recommendedGzipSettings = true;
             recommendedOptimisation = true;
             recommendedProxySettings = true;
+            statusPage = true;
             virtualHosts."iot.zarybnicky.com" = {
               enableACME = true;
               forceSSL = true;
@@ -114,6 +116,10 @@
                 proxyPass = "http://127.0.0.1:15672";
                 proxyWebsockets = true;
               };
+              locations."/kibana" = {
+                proxyPass = "http://127.0.0.1:5601";
+                proxyWebsockets = true;
+              };
               # locations."/alertmanager" = {
               #   proxyPass = "http://127.0.0.1:9093";
               #   proxyWebsockets = true;
@@ -123,15 +129,16 @@
           security.acme.acceptTerms = true;
           security.acme.email = "jakub@zarybnicky.com";
 
-          services.postgresql = {
+          services.elasticsearch = {
             enable = true;
-            extraPlugins = [ pkgs.timescaledb ];
-            settings.shared_preload_libraries = "timescaledb";
-            ensureDatabases = ["iot"];
-            ensureUsers = [{
-              name = "iot";
-              ensurePermissions = { ".*" = "ALL PRIVILEGES"; };
-            }];
+          };
+          services.kibana = {
+            enable = true;
+          };
+          services.logstash = {
+            enable = true;
+            inputConfig = "rabbitmq { host => 'localhost' exchange => \"iot\" durable => true }";
+            outputConfig = "elasticsearch { }";
           };
 
           services.grafana = {
@@ -153,9 +160,9 @@
                   targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.node.port}" ];
                 }];
               } {
-                job_name = "postgres";
+                job_name = "nginx";
                 static_configs = [{
-                  targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.postgres.port}" ];
+                  targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.nginx.port}" ];
                 }];
               } {
                 job_name = "rabbitmq";
@@ -165,9 +172,8 @@
               }
             ];
           };
-          services.prometheus.exporters.postgres = {
+          services.prometheus.exporters.nginx = {
             enable = true;
-            runAsLocalSuperUser = true;
           };
           services.prometheus.exporters.node = {
             enable = true;
