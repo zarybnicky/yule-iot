@@ -4,7 +4,7 @@ on:
     branches:
       - master
 jobs:
-  tests:
+  deploy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2.3.4
@@ -19,6 +19,4 @@ jobs:
     - run: "cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}"
     - run: "cachix use zarybnicky-cache"
     - run: "nix path-info --all | grep -v '\\.drv$' > /tmp/store-path-pre-build"
-    - run: "nix build .#test"
-    - run: "nix-shell --run 'echo OK'"
-    - run: "echo ./result | cachix push -j8 zarybnicky-cache"
+    - run: "nix build .#test | cachix push -j8 zarybnicky-cache"
