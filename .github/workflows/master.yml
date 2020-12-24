@@ -35,6 +35,6 @@ jobs:
 
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no iot@${{ secrets.HOST }} 2>&1 <<EOS
           nix-copy-closure -v --gzip --from https://zarybnicky-cache.cachix.org $(realpath ./result)
-          sudo $(realpath ./result)/bin/switch-to-configuration switch
           sudo nix-env --profile /nix/var/nix/profiles/system --set $(realpath ./result)
+          sudo $(realpath ./result)/bin/switch-to-configuration switch
         EOS
