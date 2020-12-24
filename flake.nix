@@ -120,11 +120,13 @@
               # };
             };
           };
+          security.acme.acceptTerms = true;
+          security.acme.email = "jakub@zarybnicky.com";
 
           services.postgresql = {
             enable = true;
             extraPlugins = [ pkgs.timescaledb ];
-            extraConfig = "shared_preload_libraries = 'timescaledb'";
+            settings.shared_preload_libraries = "timescaledb";
             ensureDatabases = ["iot"];
             ensureUsers = [{
               name = "iot";
@@ -269,7 +271,7 @@
             description = "Promtail service for Loki";
             wantedBy = [ "multi-user.target" ];
             serviceConfig = {
-              ExecStart = "${pkgs.grafana-loki}/bin/promtail --config.file ${./promtail.yaml}";
+              ExecStart = "${pkgs.grafana-loki}/bin/promtail --config.file ${promTail}";
             };
           };
         })
