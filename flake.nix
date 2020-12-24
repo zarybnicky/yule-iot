@@ -9,22 +9,38 @@
       system = "x86_64-linux";
       overlays = [ self.overlay ];
     };
+    pythonEnv = pkgs.python38.withPackages (ps: [
+      ps.pika
+    ]);
     getSrc = dir: gitignoreSourcePure [./.gitignore] dir;
 
   in {
     overlay = final: prev: {
-      test = pkgs.writeText "config.yaml" ''
-        ...
-      '';
-    };
-
-    packages.x86_64-linux = {
-      inherit (pkgs) test;
+      python38 = prev.python38.override {
+        packageOverrides = pyself: pysuper: {
+          pyo = pyself.buildPythonPackage rec {
+            pname = "pyo";
+            version = "1.0.3";
+            name = "${pname}-${version}";
+            src = pyself.fetchPypi {
+              inherit pname version;
+              sha256 = "8NGHp446ufECdYU6IraggJSu7U4MKt7oaXc0Nzqo3R8=";
+            };
+            doCheck = false;
+            buildInputs = [
+              final.fftw.dev
+              final.portaudio
+              final.portmidi
+              final.liblo
+              final.libsndfile.dev
+            ];
+          };
+        };
+      };
     };
 
     devShell.x86_64-linux = pkgs.mkShell {
-      buildInputs = [
-      ];
+      buildInputs = [ pythonEnv ];
     };
 
     nixosConfigurations.charlie = nixpkgs.lib.nixosSystem {
@@ -62,7 +78,7 @@
           fileSystems."/" = { device = "/dev/sda1"; fsType = "ext4"; };
 
           networking.firewall.allowPing = true;
-          networking.firewall.allowedTCPPorts = [ 22 80 443 5672 ];
+          networking.firewall.allowedTCPPorts = [ 22 80 443 1883 5672 ];
           networking.hostName = "charlie";
           networking.domain = "z";
 
@@ -73,8 +89,10 @@
 
           environment.systemPackages = with pkgs; [
             coreutils diffutils findutils binutils file htop silver-searcher ripgrep
-            git cachix rabbitmq-server mosquitto
+            git cachix rabbitmq-server mosquitto direnv nix-direnv
+            pythonEnv
           ];
+          environment.pathsToLink = [ "/share/nix-direnv" ];
 
           services.fail2ban.enable = true;
           security.sudo.wheelNeedsPassword = false;
@@ -151,10 +169,19 @@
           };
           services.logstash = {
             enable = true;
-            dataDir = "/var/lib/logstash --java-execution false";
-            inputConfig = "rabbitmq { host => \"127.0.0.1\" durable => true }";
+            dataDir = "/var/lib/logstash";
+            inputConfig = ''
+              rabbitmq {
+                host => "127.0.0.1"
+                queue => "logstash"
+                exchange => "amq.topic"
+                key => "#"
+                durable => true
+              }
+            '';
             outputConfig = "elasticsearch { }";
           };
+          systemd.services.logstash.environment.ES_JAVA_OPTS = "-Xms128m";
 
           services.grafana = {
             enable = true;
@@ -206,9 +233,13 @@
           services.rabbitmq = {
             enable = true;
             listenAddress = "0.0.0.0";
-            plugins = [ "rabbitmq_management" "rabbitmq_prometheus" ];
+            plugins = [ "rabbitmq_mqtt" "rabbitmq_management" "rabbitmq_prometheus" ];
             configItems = {
               "management.path_prefix" = "/rabbitmq";
+              "loopback_users" = "none";
+              "mqtt.allow_anonymous" = "true";
+              "mqtt.default_user" = "guest";
+              "mqtt.default_pass" = "guest";
             };
           };
 

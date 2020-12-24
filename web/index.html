@@ -5,6 +5,7 @@
      display: grid;
      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
      grid-gap: 1rem;
+     max-width: 800px;
  }
  .grid > a {
      background: white;
@@ -41,7 +42,7 @@
   <a href="/grafana">
     <img src="https://upload.wikimedia.org/wikipedia/en/thumb/a/a1/Grafana_logo.svg/1024px-Grafana_logo.svg.png" alt="Grafana" name="Grafana">
   </a>
-  <a href="/grafana/d/rZk6OtbMk/loki?orgId=1">
+  <a href="/grafana/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Loki%22,%7B%22expr%22:%22%7Bhost%3D%5C%22iot%5C%22,%20job%3D%5C%22systemd-journal%5C%22,%20unit%3D%5C%22%5C%22%7D%22%7D%5D">
     <img src="https://grafana.com/docs/loki/latest/logo_and_name.png" alt="Loki" name="Loki">
   </a>
   <a href="/kibana">
