@@ -32,10 +32,11 @@ jobs:
         chmod 700 ~/.ssh
         chmod 600 ~/.ssh/deploy_key
         cat > ~/.ssh/config <<EOS
-        Host deploy
-        Hostname ${{ secrets.HOST }}
-        User iot
-        IdentityFile ~/.ssh/deploy_key
+          Host deploy
+          Hostname ${{ secrets.HOST }}
+          User iot
+          IdentityFile ~/.ssh/deploy_key
+        EOS
         set -xe
 
         nix copy -s --to ${{ secrets.HOST }} ./result
