@@ -1,0 +1,25 @@
+name: "Deploy"
+on:
+  push:
+    branches:
+      - master
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2.3.4
+      with:
+          fetch-depth: 0
+    - uses: cachix/install-nix-action@v12
+      with:
+        install_url: https://github.com/numtide/nix-flakes-installer/releases/download/nix-2.4pre20201221_9fab14a/install
+        extra_nix_config: |
+          experimental-features = nix-command flakes
+    - run: "nix-env --quiet -j8 -iA cachix -f https://cachix.org/api/v1/install"
+    - run: "cachix authtoken $CACHIX_AUTH_TOKEN"
+      env: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - run: "cachix use zarybnicky-cache"
+    - run: "nix path-info --all | grep -v '\.drv$' > /tmp/store-path-pre-build"
+    - run: nix build .#test
+    - run: nix-shell --run "echo OK"
+    - run: echo ./result | cachix push -j8 zarybnicky-cache

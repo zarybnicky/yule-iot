@@ -7,27 +7,20 @@
       system = "x86_64-linux";
       overlays = [ self.overlay ];
     };
-    compiler = "ghc884";
-    hsPkgs = pkgs.haskell.packages.${compiler};
     getSrc = dir: gitignoreSourcePure [./.gitignore] dir;
 
   in {
-    overlay = final: prev: let
-      inherit (prev.haskell.lib) doJailbreak dontCheck justStaticExecutables
-        generateOptparseApplicativeCompletion;
-    in {
-      haskell = prev.haskell // {
-        packageOverrides = prev.lib.composeExtensions (prev.haskell.packageOverrides or (_: _: {})) (hself: hsuper: {
-        });
-      };
+    overlay = final: prev: {
+      test = pkgs.writeText "config.yaml" ''
+        ...
+      '';
     };
 
     packages.x86_64-linux = {
+      inherit (pkgs) test;
     };
 
-    devShell.x86_64-linux = hsPkgs.shellFor {
-      withHoogle = true;
-      packages = p: [ ];
+    devShell.x86_64-linux = pkgs.mkShell {
       buildInputs = [
         pkgs.cachix
       ];
