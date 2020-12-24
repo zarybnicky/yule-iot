@@ -19,4 +19,4 @@ jobs:
     - run: "cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}"
     - run: "cachix use zarybnicky-cache"
     - run: "nix path-info --all | grep -v '\\.drv$' > /tmp/store-path-pre-build"
-    - run: "nix build -L .#test | tee /dev/tty | cachix push -j8 zarybnicky-cache"
+    - run: "nix build -L .#test | tee >(cachix push -j8 zarybnicky-cache)"
