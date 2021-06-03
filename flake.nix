@@ -1,6 +1,4 @@
 {
-  inputs.nixpkgs.url = github:NixOS/nixpkgs/nixos-20.09-small;
-
   outputs = { self, nixpkgs }: let
     inherit (nixpkgs.lib) flip mapAttrs mapAttrsToList;
     inherit (pkgs.nix-gitignore) gitignoreSourcePure gitignoreSource;
