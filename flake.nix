@@ -88,7 +88,7 @@
           environment.systemPackages = with pkgs; [
             coreutils diffutils findutils binutils file htop silver-searcher ripgrep
             git cachix rabbitmq-server mosquitto direnv nix-direnv
-            pythonEnv
+            pythonEnv rclone 
           ];
           environment.pathsToLink = [ "/share/nix-direnv" ];
 
